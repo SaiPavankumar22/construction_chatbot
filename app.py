@@ -6,14 +6,13 @@ from crewai_tools import SerperDevTool
 from typing import List, Tuple
 import time
 
-# Environment variables setup
 OPENROUTER_API_KEY = "your api key"
 SERPER_API_KEY = "your api key"
 
-# Set environment variable for serper
+
 os.environ["SERPER_API_KEY"] = SERPER_API_KEY
 
-# Initialize CrewAI LLM with OpenRouter (DeepSeek R1)
+
 crew_llm = LLM(
     model="openrouter/deepseek/deepseek-r1",
     base_url="https://openrouter.ai/api/v1",
@@ -21,7 +20,7 @@ crew_llm = LLM(
     temperature=0.7
 )
 
-# Initialize direct LangChain LLM for fallback using OpenRouter
+
 direct_llm = ChatOpenAI(
     model="deepseek/deepseek-r1",
     openai_api_key=OPENROUTER_API_KEY,
@@ -32,14 +31,14 @@ direct_llm = ChatOpenAI(
 
 class ConstructionChatbot:
     def __init__(self):
-        self.memory: List[Tuple[str, str]] = []  # Rolling window of 5 messages
+        self.memory: List[Tuple[str, str]] = []  
         self.setup_tools()
         self.setup_crew()
     
     def setup_tools(self):
         """Set up web search tools"""
         try:
-            self.search_tool = SerperDevTool()  # Will use environment variable
+            self.search_tool = SerperDevTool()  
             print("✅ Web search tool initialized successfully")
         except Exception as e:
             self.search_tool = None
@@ -52,7 +51,7 @@ class ConstructionChatbot:
         if self.search_tool:
             tools.append(self.search_tool)
         
-        # Construction Expert Agent with improved prompt
+
         self.construction_agent = Agent(
             role='Construction Expert Assistant',
             goal='Provide accurate construction-related information ONLY. Reject all non-construction queries.',
@@ -80,7 +79,7 @@ class ConstructionChatbot:
             max_execution_time=45
         )
         
-        # Web Search Research Agent (for construction-related research)
+
         if self.search_tool:
             self.research_agent = Agent(
                 role='Construction Research Specialist',
@@ -109,7 +108,7 @@ class ConstructionChatbot:
         """Add interaction to rolling memory window"""
         self.memory.append((user_query, response))
         if len(self.memory) > 5:
-            self.memory.pop(0)  # Remove oldest message
+            self.memory.pop(0) 
     
     def get_chat_history(self) -> str:
         """Format chat history for prompt"""
@@ -136,7 +135,7 @@ class ConstructionChatbot:
     
     def generate_response_with_crew(self, user_query: str) -> str:
         """Generate response using CrewAI with web search capabilities"""
-        # First check if query is construction-related
+
         if not self.is_construction_related(user_query):
             response = "I can only assist with construction-related queries. Please ask about building, safety, materials, project management, or engineering topics."
             self.add_to_memory(user_query, response)
@@ -145,12 +144,12 @@ class ConstructionChatbot:
         chat_history = self.get_chat_history()
         
         try:
-            # Determine if web search is needed for construction topics
+
             search_keywords = ['current', 'latest', 'recent', 'today', '2024', '2025', 'price', 'cost', 'regulation', 'new', 'trend']
             needs_search = any(keyword in user_query.lower() for keyword in search_keywords)
             
             if needs_search and self.research_agent:
-                # Create research task first
+
                 research_task = Task(
                     description=f"""Search for current construction-related information about: {user_query}
                     
@@ -167,7 +166,7 @@ class ConstructionChatbot:
                     agent=self.research_agent
                 )
                 
-                # Create response task
+
                 response_task = Task(
                     description=f"""Based on research findings and chat history, provide a comprehensive response to: {user_query}
                     
@@ -185,15 +184,15 @@ class ConstructionChatbot:
                     context=[research_task]
                 )
                 
-                # Create crew with both agents
+
                 crew = Crew(
                     agents=[self.research_agent, self.construction_agent],
                     tasks=[research_task, response_task],
-                    verbose=False  # Reduce verbose output
+                    verbose=False 
                 )
                 
             else:
-                # Create direct response task
+
                 response_task = Task(
                     description=f"""Provide expert construction advice for: {user_query}
                     
@@ -210,28 +209,28 @@ class ConstructionChatbot:
                     agent=self.construction_agent
                 )
                 
-                # Create crew with single agent
+
                 crew = Crew(
                     agents=[self.construction_agent],
                     tasks=[response_task],
                     verbose=False
                 )
             
-            # Execute crew
+
             result = crew.kickoff()
             response = str(result).strip()
             
-            # Clean up response if needed
+
             if not response or len(response) < 10:
                 response = "I apologize, but I'm having trouble generating a proper response. Could you please rephrase your construction-related question?"
             
-            # Add to memory
+
             self.add_to_memory(user_query, response)
             return response
             
         except Exception as e:
             print(f"CrewAI Error: {e}")
-            # Fallback to direct LLM
+
             return self.generate_response_direct(user_query)
     
     def generate_response_direct(self, user_query: str) -> str:
@@ -279,10 +278,9 @@ Technical error: {str(e)[:100]}..."""
             print(f"Crew method failed, using direct method: {e}")
             return self.generate_response_direct(user_query)
 
-# Initialize chatbot
+
 chatbot = ConstructionChatbot()
 
-# Custom CSS for construction-themed interface with vibrant colors
 custom_css = """
 /* Construction-themed color palette */
 :root {
@@ -602,7 +600,7 @@ def create_interface():
     
     with gr.Blocks(css=custom_css, title="🏗️ Construction AI Assistant - DeepSeek R1 🏗️") as interface:
         
-        # Header with construction theme
+
         gr.HTML("""
         <div class="construction-header">
             🏗️ CONSTRUCTION COMPANY AI ASSISTANT 🏗️
@@ -613,7 +611,7 @@ def create_interface():
         </div>
         """)
         
-        # Status display with construction styling
+
         def get_status_info():
             search_status = "🌐 Web Search: ONLINE" if chatbot.search_tool else "🌐 Web Search: OFFLINE"
             search_class = "status-online" if chatbot.search_tool else "status-offline"
@@ -633,7 +631,7 @@ def create_interface():
         
         memory_status = gr.HTML(get_status_info())
         
-        # Main chat interface
+
         with gr.Row():
             with gr.Column():
                 chatbot_interface = gr.Chatbot(
@@ -648,7 +646,7 @@ def create_interface():
                     elem_classes=["chatbot"]
                 )
         
-        # Input section with construction styling
+
         with gr.Row():
             with gr.Column(scale=8):
                 msg_input = gr.Textbox(
@@ -667,14 +665,14 @@ def create_interface():
                     elem_classes=["btn-primary"]
                 )
         
-        # Quick action buttons
+       
         with gr.Row():
             with gr.Column(scale=1):
                 clear_btn = gr.Button("🗑️ Clear Chat", variant="secondary", elem_classes=["btn-secondary"])
             with gr.Column(scale=1):
                 examples_btn = gr.Button("💡 Examples", variant="secondary", elem_classes=["btn-secondary"])
         
-        # Example questions and features
+      
         examples_html = f"""
         <div class="success-box">
             <h4>✅ CONSTRUCTION QUESTIONS I CAN ANSWER {'(with Live Web Search!)' if chatbot.search_tool else ''}:</h4>
@@ -713,7 +711,7 @@ def create_interface():
         
         examples_display = gr.HTML(examples_html, visible=False)
         
-        # Event handlers
+
         def update_memory_display():
             return get_status_info()
         
@@ -721,14 +719,14 @@ def create_interface():
             if not message.strip():
                 return history, "", update_memory_display()
             
-            # Add typing indicator (simulation)
+
             if history is None:
                 history = []
             
-            # Add user message
+       
             history.append({"role": "user", "content": message})
             
-            # Generate bot response
+
             try:
                 response = chatbot.generate_response(message)
                 history.append({"role": "assistant", "content": response})
@@ -745,13 +743,13 @@ def create_interface():
         def toggle_examples(current_visibility):
             return not current_visibility
         
-        # Wire up events
+
         msg_input.submit(respond, [msg_input, chatbot_interface], [chatbot_interface, msg_input, memory_status])
         send_btn.click(respond, [msg_input, chatbot_interface], [chatbot_interface, msg_input, memory_status])
         clear_btn.click(clear_chat, outputs=[chatbot_interface, memory_status])
         examples_btn.click(toggle_examples, inputs=examples_display, outputs=examples_display)
         
-        # Web search status info
+ 
         if chatbot.search_tool:
             gr.HTML(f"""
             <div class="success-box">
@@ -784,7 +782,7 @@ def create_interface():
             </div>
             """)
         
-        # DeepSeek R1 and model information
+   
         gr.HTML(f"""
         <div class="info-box">
             <h4>🧠 POWERED BY DEEPSEEK R1 - ADVANCED REASONING AI</h4>
@@ -820,7 +818,7 @@ def create_interface():
         </div>
         """)
         
-        # Footer with additional information
+  
         gr.HTML("""
         <div style="text-align: center; margin-top: 30px; padding: 20px; background: linear-gradient(135deg, rgba(255, 107, 26, 0.1), rgba(255, 193, 7, 0.1)); border-radius: 15px; border: 2px solid var(--construction-orange);">
             <h5 style="color: var(--construction-orange); margin-bottom: 10px;">🏗️ PROFESSIONAL CONSTRUCTION AI ASSISTANT 🏗️</h5>
@@ -834,7 +832,7 @@ def create_interface():
     
     return interface
 
-# Launch the application
+
 if __name__ == "__main__":
     print("🏗️" + "="*80)
     print("🏗️  STARTING CONSTRUCTION COMPANY AI ASSISTANT")
@@ -850,7 +848,7 @@ if __name__ == "__main__":
     print("🏗️" + "="*80)
     print("🚀  Launching interface...")
     
-    # Test web search capability
+
     if chatbot.search_tool:
         print("✅  Web search tool initialized successfully!")
         print("💡  Users can get real-time construction data")
@@ -860,10 +858,10 @@ if __name__ == "__main__":
     
     print("🏗️" + "="*80)
     
-    # Create and launch the interface
+
     interface = create_interface()
     interface.launch(
-        share=True,
+        share=False,
         server_name="0.0.0.0",
         server_port=7863,
         show_error=True,
