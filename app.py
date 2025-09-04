@@ -836,38 +836,9 @@ def create_interface():
 
 
 if __name__ == "__main__":
-    print("🏗️" + "="*80)
-    print("🏗️  STARTING CONSTRUCTION COMPANY AI ASSISTANT")
-    print("🏗️" + "="*80)
-    print("🧠  AI Model: DeepSeek R1 (Advanced Reasoning)")
-    print("🌐  API Provider: OpenRouter")
-    print("🔍  Web Search: Serper API")
-    print(f"📡  Search Status: {'✅ ENABLED' if chatbot.search_tool else '❌ DISABLED (Check API Key)'}")
-    print("🤖  Agent Framework: CrewAI")
-    print("💬  Interface: Gradio with Construction Theme")
-    print("🚨  Query Filter: Construction Topics ONLY")
-    print("💭  Memory: Rolling window of 5 conversations")
-    print("🏗️" + "="*80)
-    print("🚀  Launching interface...")
-    
-
-    if chatbot.search_tool:
-        print("✅  Web search tool initialized successfully!")
-        print("💡  Users can get real-time construction data")
-    else:
-        print("⚠️   Web search disabled - check SERPER_API_KEY")
-        print("💡  Assistant will work with knowledge base only")
-    
-    print("🏗️" + "="*80)
-    
-
     interface = create_interface()
-    interface.launch(
-        share=False,
-        server_name="0.0.0.0",
-        server_port=7863,
-        show_error=True,
-        debug=False,
-        favicon_path=None,
-        inbrowser=True
-    )
+
+    if os.getenv("SPACE_ID"):
+        interface.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
+    else:
+        interface.launch(inbrowser=True, server_name="0.0.0.0", server_port=7860)
