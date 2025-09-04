@@ -1,6 +1,3 @@
-# Construction Company AI Assistant
-
-# Construction Company AI Assistant
 ---
 title: Construction Company AI Assistant
 emoji: 🏗️
@@ -11,7 +8,7 @@ sdk_version: "5.29.1"
 app_file: app.py
 pinned: false
 ---
-
+# Construction Company AI Assistant
 An expert, construction-only AI assistant with a modern Gradio UI, powered by DeepSeek R1 via OpenRouter, optional live web search (Serper), and CrewAI agents.
 
 ## Features
