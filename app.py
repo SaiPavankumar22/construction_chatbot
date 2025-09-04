@@ -6,11 +6,13 @@ from crewai_tools import SerperDevTool
 from typing import List, Tuple
 import time
 
-OPENROUTER_API_KEY = "your api key"
-SERPER_API_KEY = "your api key"
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+SERPER_API_KEY = os.getenv("SERPER_API_KEY")
 
-
-os.environ["SERPER_API_KEY"] = SERPER_API_KEY
+if not OPENROUTER_API_KEY:
+    raise ValueError("Missing OPENROUTER_API_KEY environment variable")
+if not SERPER_API_KEY:
+    raise ValueError("Missing SERPER_API_KEY environment variable")
 
 
 crew_llm = LLM(
